@@ -28,8 +28,11 @@ public class Server {
 		DataOutputStream writeStream = new DataOutputStream(clients.get(0).getOutputStream());
 		DataInputStream readStream = new DataInputStream(clients.get(0).getInputStream());
 		
+		Reader reader = new Reader();
+		reader.run(clients.get(0), clients);
+		
 		while(true) {
-			//Thread.sleep(1000);
+			Thread.sleep(1000);
 			writeStream.writeUTF("Hejsan din fula klient");
 		}
 		
@@ -57,12 +60,36 @@ public class Server {
 	}
 	
 	private class Reader extends Thread {
-		public void run(Socket socket) throws IOException {
+		public void run(Socket socket, ArrayList<Socket> clients) throws IOException {
 			DataInputStream readStream = new DataInputStream(socket.getInputStream());
+			DataOutputStream writeStream;
+			String message;
 			
-			while(true) {
-				System.out.println(readStream.readUTF());
+			while(socket.isConnected()) {	
+				
+				try{
+					message = readStream.readUTF();
+
+					System.out.println("Received: " + message);
+					
+					//send incoming messages to other clients.
+					for(Socket client : clients) {
+						if(client.isClosed()) {
+							//disconnect
+							continue;
+						}
+						
+						if(!client.equals(socket) || true) {
+							writeStream = new DataOutputStream(client.getOutputStream());
+							writeStream.writeUTF(message);
+						}
+					}
+				} catch(Exception e) {
+					//client probably disconnected
+				}	
 			}
+			
+			//client disconnected.
 		}
 	}
 }

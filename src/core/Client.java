@@ -18,14 +18,17 @@ public class Client {
 		
 		System.out.println("Connected!");
 		
-		Reader reader = new Reader();
-		reader.run(socket);
+		Thread reader = new Thread(new Reader(socket), "reader");
+		reader.start();
 		
-		Writer writer = new Writer();
-		writer.run(socket);
+		BufferedReader consoleInput = new BufferedReader(new InputStreamReader(System.in));
+		DataOutputStream writeStream = new DataOutputStream(socket.getOutputStream());
 		
+		String input = null;
 		while(socket.isConnected()) {
-			//do nothing
+	        input = consoleInput.readLine();
+
+			writeStream.writeUTF(input);
 		}
 		
 		System.out.println("Closing...");
@@ -41,24 +44,33 @@ public class Client {
 		}
 	}
 	
-	private class Writer extends Thread {
-		public void run(Socket socket) throws IOException {
-			DataOutputStream writeStream = new DataOutputStream(socket.getOutputStream());
-			BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-			
-			while(true) {
-				writeStream.writeUTF(in.readLine());
-				System.out.println();
-			}
+	class Reader extends Thread {
+		private Socket socket;
+		
+		Reader(Socket socket) {
+			this.socket = socket;
 		}
-	}
-	
-	private class Reader extends Thread {
-		public void run(Socket socket) throws IOException {
-			DataInputStream readStream = new DataInputStream(socket.getInputStream());
+		
+		Reader(String threadName) {
+			super(threadName); // Initialize thread.
+			System.out.println(this);
+			start();
+		}
+		
+		public void run() {
+			//Display info about this particular thread
+			System.out.println(Thread.currentThread().getName());
 			
-			while(true) {
-				System.out.println(readStream.readUTF());
+			DataInputStream readStream;
+			try {
+				readStream = new DataInputStream(socket.getInputStream());
+				
+				while(true) {
+					System.out.println(readStream.readUTF());
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 	}
