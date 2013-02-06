@@ -22,26 +22,16 @@ public class Server {
 	public void run() throws IOException, InterruptedException {
 		System.out.println("Listening on port 8888...");
 		
-		clients.add(serverSocket.accept());
-		System.out.println("Client connetected with IP: " + clients.get(0).getRemoteSocketAddress());
-		
-		DataOutputStream writeStream = new DataOutputStream(clients.get(0).getOutputStream());
-		DataInputStream readStream = new DataInputStream(clients.get(0).getInputStream());
-		
-		Reader reader = new Reader();
-		reader.run(clients.get(0), clients);
-		
 		while(true) {
-			Thread.sleep(1000);
-			writeStream.writeUTF("Hejsan din fula klient");
+			//Accept incoming clients
+			clients.add(serverSocket.accept());
+			System.out.println("Client connetected with IP: " + clients.get(clients.size()-1).getRemoteSocketAddress());
+			System.out.println("Clients: " + clients.size());
+			
+			//Spawn a new reader thread for each connected client
+			Thread reader = new Thread(new Reader(clients.get(clients.size()-1), clients), "reader-client-0");
+			reader.start();
 		}
-		
-		//System.out.println(readStream.readUTF());
-		/*
-		System.out.println("Closing...");
-		
-		clients.get(0).close();
-		serverSocket.close();*/
 	}
 	
 	public static void main(String [] args) {
@@ -60,14 +50,28 @@ public class Server {
 	}
 	
 	private class Reader extends Thread {
-		public void run(Socket socket, ArrayList<Socket> clients) throws IOException {
-			DataInputStream readStream = new DataInputStream(socket.getInputStream());
-			DataOutputStream writeStream;
-			String message;
+		private Socket socket;
+		private ArrayList<Socket> clients;
+		
+		Reader(Socket socket, ArrayList<Socket> clients) {
+			this.socket = socket;
+			this.clients = clients;
+		}
+		
+		Reader(String threadName) {
+			super(threadName); // Initialize thread.
+			System.out.println(this);
+			start();
+		}
+		
+		public void run() {
+			try {
+				DataInputStream readStream = new DataInputStream(socket.getInputStream());
 			
-			while(socket.isConnected()) {	
+				DataOutputStream writeStream;
+				String message;
 				
-				try{
+				while(socket.isConnected()) {	
 					message = readStream.readUTF();
 
 					System.out.println("Received: " + message);
@@ -76,20 +80,31 @@ public class Server {
 					for(Socket client : clients) {
 						if(client.isClosed()) {
 							//disconnect
+							clients.remove(client);
+							System.out.println("Client disconnected");
+							System.out.println("Clients: " + clients.size());
 							continue;
 						}
 						
-						if(!client.equals(socket) || true) {
+						if(!client.equals(socket)) {
 							writeStream = new DataOutputStream(client.getOutputStream());
 							writeStream.writeUTF(message);
 						}
 					}
-				} catch(Exception e) {
-					//client probably disconnected
-				}	
+				}
+			} catch (Exception e) {
+				//something wrong.
+				try {
+					socket.close();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+				
+				clients.remove(socket);
+				System.out.println("Client hard disconnected");
+				System.out.println("Clients: " + clients.size());
 			}
-			
-			//client disconnected.
 		}
 	}
 }
