@@ -11,6 +11,9 @@ import java.net.UnknownHostException;
 public class Client {
 	private Socket socket;
 	
+	private static int PORT = 8888;
+	private static String HOST = "localhost";
+	
 	Client(String host, int port) throws UnknownHostException, IOException {
 		System.out.println("Connecting to " + host + " on port " + port + "...");
 		
@@ -35,9 +38,13 @@ public class Client {
 		socket.close();
 	}
 	
-	public static void main(String [] args) {		
+	public static void main(String [] args) {
 		try {
-			new Client(args[0], Integer.parseInt(args[1]));
+			if(args.length != 2){
+				new Client(HOST, PORT);
+			} else{
+				new Client(args[0], Integer.parseInt(args[1]));
+			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

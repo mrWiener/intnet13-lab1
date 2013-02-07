@@ -10,9 +10,10 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 public class Server {
+	private static int PORT = 8888;
+	
 	private ServerSocket serverSocket;
 	private ArrayList<Socket> clients;
-	
 	
 	public Server(int port) throws IOException {
 		serverSocket = new ServerSocket(port);
@@ -20,7 +21,7 @@ public class Server {
 	}
 	
 	public void run() throws IOException, InterruptedException {
-		System.out.println("Listening on port 8888...");
+		System.out.println("Listening on port " + PORT +"...");
 		
 		while(true) {
 			//Accept incoming clients
@@ -38,7 +39,7 @@ public class Server {
 		Server server;
 		
 		try {
-			server = new Server(8888);
+			server = new Server(PORT);
 			server.run();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
