@@ -65,8 +65,6 @@ public class Client {
 		}
 		
 		public void run() {
-			//Display info about this particular thread
-			System.out.println(Thread.currentThread().getName());
 			
 			DataInputStream readStream;
 			try {
